@@ -8,10 +8,14 @@ import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.UUID;
+
+import static org.springframework.security.authorization.AuthorityReactiveAuthorizationManager.hasAuthority;
 
 @RestController
 @RequestMapping("/api/v1/prq")
@@ -36,7 +40,7 @@ public class PRQController {
     }
 
     // --- 3. GET: All PRQs (Summary List with Optional Filter) ---
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<Page<PrqSummaryResponse>> getAllPrq(
             @RequestParam(required = false) String department,
             @RequestParam(defaultValue = "0") int page,
@@ -46,10 +50,35 @@ public class PRQController {
         return ResponseEntity.ok(response);
     }
 
-    // --- 4. GET: Single PRQ by ID (Detail View) ---
     @GetMapping("/{id}")
     public ResponseEntity<PrqDetailResponse> getPrqById(@PathVariable UUID id) {
         PrqDetailResponse response = prqService.getPurchaseRequestById(id);
         return ResponseEntity.ok(response);
+    }
+
+    // --- 5. POST: Submit a Draft ---
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<Map<String, String>> submitPrq(@PathVariable UUID id) {
+        return ResponseEntity.ok(prqService.submitPrq(id));
+    }
+
+    // --- 6. POST: Approve a PRQ (Manager Only) ---
+    @PreAuthorize("hasAuthority('PROCUREMENT_MANAGER')")
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<Map<String, String>> approvePrq(@PathVariable UUID id) {
+        return ResponseEntity.ok(prqService.approvePrq(id));
+    }
+
+    // --- 7. POST: Reject a PRQ (Manager Only) ---
+    @PreAuthorize("hasAuthority('PROCUREMENT_MANAGER')")
+    @PostMapping("/{id}/reject")
+    public ResponseEntity<Map<String, String>> rejectPrq(@PathVariable UUID id) {
+        return ResponseEntity.ok(prqService.rejectPrq(id));
+    }
+
+    @GetMapping("/test-auth")
+    public ResponseEntity<String> testAuth() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return ResponseEntity.ok("Authorities inside Controller: " + auth.getAuthorities());
     }
 }
