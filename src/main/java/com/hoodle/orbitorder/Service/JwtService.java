@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.function.Function;
 
 @Service
@@ -37,6 +38,17 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
         return claims.getSubject();
+    }
+
+    public List<String> extractRoles(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        // Extract the "roles" array you created in the Auth Service
+        return claims.get("roles", List.class);
     }
 
     public String extractClaim(String token, String claimKey) {

@@ -77,7 +77,6 @@ public class PRQService {
     }
 
 
-    // --- 1. GET MY LIST (Summary) ---
     public Page<PrqSummaryResponse> getUserPurchaseRequests(int page, int size) {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -86,7 +85,6 @@ public class PRQService {
         return userPrqs.map(this::mapToSummary);
     }
 
-    // --- 2. GET ALL LIST (Summary) ---
     public Page<PrqSummaryResponse> getAllPurchaseRequests(String department, int page, int size) {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -98,7 +96,6 @@ public class PRQService {
         return prqPage.map(this::mapToSummary);
     }
 
-    // --- 3. GET SINGLE DETAIL (Heavy) ---
     public PrqDetailResponse getPurchaseRequestById(UUID prqId) {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -108,7 +105,69 @@ public class PRQService {
         return mapToDetail(prq);
     }
 
-    // --- MAPPERS ---
+    @Transactional
+    public Map<String, String> submitPrq(UUID prqId) {
+        UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        // 1. Find the PRQ (Ensuring it belongs to the current user's tenant)
+        PRQ prq = prqRepo.findByIdAndTenantId(prqId, currentUser.tenantId())
+                .orElseThrow(() -> new RuntimeException("PRQ not found"));
+
+        // 2. Security Check: Only the person who created it can submit it
+        if (!prq.getRequesterId().equals(currentUser.userId())) {
+            throw new RuntimeException("Unauthorized: You can only submit your own Drafts.");
+        }
+
+        // 3. Business Logic Check: Can only submit if it's a DRAFT
+        if (prq.getStatus() != PrStatus.DRAFT) {
+            throw new RuntimeException("Only DRAFT requests can be submitted.");
+        }
+
+        // 4. Update the state
+        prq.setStatus(PrStatus.SUBMITTED);
+        prqRepo.save(prq);
+
+        return Map.of("message", "PRQ successfully submitted", "status", prq.getStatus().name());
+    }
+
+    @Transactional
+    public Map<String, String> approvePrq(UUID prqId) {
+        UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        PRQ prq = prqRepo.findByIdAndTenantId(prqId, currentUser.tenantId())
+                .orElseThrow(() -> new RuntimeException("PRQ not found"));
+
+        if (prq.getStatus() != PrStatus.SUBMITTED) {
+            throw new RuntimeException("Only SUBMITTED requests can be approved.");
+        }
+
+        // Update state and log the Manager's ID!
+        prq.setStatus(PrStatus.APPROVED);
+        prq.setApproverId(currentUser.userId());
+        prqRepo.save(prq);
+
+        return Map.of("message", "PRQ successfully approved", "status", prq.getStatus().name());
+    }
+
+    @Transactional
+    public Map<String, String> rejectPrq(UUID prqId) {
+        UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        PRQ prq = prqRepo.findByIdAndTenantId(prqId, currentUser.tenantId())
+                .orElseThrow(() -> new RuntimeException("PRQ not found"));
+
+        if (prq.getStatus() != PrStatus.SUBMITTED) {
+            throw new RuntimeException("Only SUBMITTED requests can be rejected.");
+        }
+
+        // Update state and log the Manager's ID!
+        prq.setStatus(PrStatus.REJECTED);
+        prq.setApproverId(currentUser.userId());
+        prqRepo.save(prq);
+
+        return Map.of("message", "PRQ successfully approved", "status", prq.getStatus().name());
+    }
+
     private PrqSummaryResponse mapToSummary(PRQ prq) {
         return PrqSummaryResponse.builder()
                 .id(prq.getId())
