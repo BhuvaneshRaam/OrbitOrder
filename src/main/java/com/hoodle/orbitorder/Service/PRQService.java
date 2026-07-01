@@ -4,6 +4,7 @@ import com.hoodle.orbitorder.DTO.*;
 import com.hoodle.orbitorder.Entity.PRQ;
 import com.hoodle.orbitorder.Entity.PRQItems;
 import com.hoodle.orbitorder.Enum.PrStatus;
+import com.hoodle.orbitorder.Exception.BusinessException;
 import com.hoodle.orbitorder.Repository.PRQRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +12,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.Year;
@@ -111,16 +114,16 @@ public class PRQService {
 
         // 1. Find the PRQ (Ensuring it belongs to the current user's tenant)
         PRQ prq = prqRepo.findByIdAndTenantId(prqId, currentUser.tenantId())
-                .orElseThrow(() -> new RuntimeException("PRQ not found"));
+                .orElseThrow(() -> new BusinessException("PRQ not found", HttpStatus.NOT_FOUND));
 
         // 2. Security Check: Only the person who created it can submit it
         if (!prq.getRequesterId().equals(currentUser.userId())) {
-            throw new RuntimeException("Unauthorized: You can only submit your own Drafts.");
+            throw new BusinessException("Unauthorized: You can only submit your own Drafts.", HttpStatus.FORBIDDEN);
         }
 
         // 3. Business Logic Check: Can only submit if it's a DRAFT
         if (prq.getStatus() != PrStatus.DRAFT) {
-            throw new RuntimeException("Only DRAFT requests can be submitted.");
+            throw new BusinessException("Only DRAFT requests can be submitted.", HttpStatus.BAD_REQUEST);
         }
 
         // 4. Update the state
@@ -135,10 +138,10 @@ public class PRQService {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         PRQ prq = prqRepo.findByIdAndTenantId(prqId, currentUser.tenantId())
-                .orElseThrow(() -> new RuntimeException("PRQ not found"));
+                .orElseThrow(() -> new BusinessException("PRQ not found", HttpStatus.NOT_FOUND));
 
         if (prq.getStatus() != PrStatus.SUBMITTED) {
-            throw new RuntimeException("Only SUBMITTED requests can be approved.");
+            throw new BusinessException("Only SUBMITTED requests can be approved.", HttpStatus.BAD_REQUEST);
         }
 
         // Update state and log the Manager's ID!
@@ -154,10 +157,10 @@ public class PRQService {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         PRQ prq = prqRepo.findByIdAndTenantId(prqId, currentUser.tenantId())
-                .orElseThrow(() -> new RuntimeException("PRQ not found"));
+                .orElseThrow(() -> new BusinessException("PRQ not found", HttpStatus.NOT_FOUND));
 
         if (prq.getStatus() != PrStatus.SUBMITTED) {
-            throw new RuntimeException("Only SUBMITTED requests can be rejected.");
+            throw new BusinessException("Only SUBMITTED requests can be rejected.", HttpStatus.BAD_REQUEST);
         }
 
         // Update state and log the Manager's ID!
