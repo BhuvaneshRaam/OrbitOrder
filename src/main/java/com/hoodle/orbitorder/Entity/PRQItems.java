@@ -1,5 +1,6 @@
 package com.hoodle.orbitorder.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +37,7 @@ public class PRQItems {
     // The link back to the parent PRQ
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pr_id", nullable = false)
+    @JsonIgnore
     private PRQ prq;
 
 }

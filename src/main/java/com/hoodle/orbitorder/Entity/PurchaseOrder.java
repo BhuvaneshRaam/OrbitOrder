@@ -1,5 +1,7 @@
 package com.hoodle.orbitorder.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.hoodle.orbitorder.Enum.PoStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,6 +35,7 @@ public class PurchaseOrder {
     // 1-to-1 Mapping: Locks the PO to the original Requisition
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prq_id", unique = true, nullable = false)
+    @JsonIgnoreProperties({"items", "hibernateLazyInitializer"})
     private PRQ originalPrq;
 
     // External Vendor Details
