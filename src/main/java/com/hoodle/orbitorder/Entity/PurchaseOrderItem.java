@@ -2,9 +2,7 @@ package com.hoodle.orbitorder.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -14,6 +12,8 @@ import java.util.UUID;
 @Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class PurchaseOrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
