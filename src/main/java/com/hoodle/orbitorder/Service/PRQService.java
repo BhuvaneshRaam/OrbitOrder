@@ -153,6 +153,61 @@ public class PRQService {
     }
 
     @Transactional
+    public Map<String,String> updatePrq(UUID prqId, PrRequest request) {
+        UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        PRQ prq = prqRepo.findByIdAndTenantId(prqId, currentUser.tenantId())
+                .orElseThrow(() -> new BusinessException("PRQ not found", HttpStatus.NOT_FOUND));
+
+        if (!prq.getRequesterId().equals(currentUser.userId())) {
+            throw new BusinessException("Unauthorized: You can only edit your own Drafts.", HttpStatus.FORBIDDEN);
+        }
+
+        // 3. Business Logic Check: Can only edit if it's a DRAFT
+        if (prq.getStatus() != PrStatus.DRAFT) {
+            throw new BusinessException("Only DRAFT requests can be edited.", HttpStatus.BAD_REQUEST);
+        }
+
+        prq.setDepartment(request.getDepartment());
+        prq.setRemarks(request.getRemarks());
+
+        // 4. Clear the existing items (Hibernate will delete them from the DB automatically)
+        prq.getItems().clear();
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // 5. Loop through the incoming request and rebuild the items list
+        for (PrItemRequest itemReq : request.getItems()) {
+            BigDecimal lineAmount = itemReq.getUnitPrice().multiply(new BigDecimal(itemReq.getQuantity()));
+            totalAmount = totalAmount.add(lineAmount);
+
+            PRQItems item = PRQItems.builder()
+                    .itemName(itemReq.getItemName())
+                    .description(itemReq.getDescription())
+                    .quantity(itemReq.getQuantity())
+                    .unitPrice(itemReq.getUnitPrice())
+                    .lineAmount(lineAmount)
+                    .prq(prq)
+                    .build();
+
+            prq.getItems().add(item);
+        }
+
+        // 6. Update the new total amount
+        prq.setTotalAmount(totalAmount);
+
+        // 7. Save to the database
+        PRQ savedPrq = prqRepo.save(prq);
+
+        return Map.of(
+                "prNumber", savedPrq.getPrNumber(),
+                "status", savedPrq.getStatus().name()
+        );
+
+
+    }
+
+    @Transactional
     public Map<String, String> rejectPrq(UUID prqId) {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 

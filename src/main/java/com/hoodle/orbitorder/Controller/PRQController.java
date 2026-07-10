@@ -30,6 +30,14 @@ public class PRQController {
         return ResponseEntity.status(201).body(response);
     }
 
+    @PutMapping("/edit/{id}")
+    public ResponseEntity<Map<String,String>> createPrq(@PathVariable UUID id, @RequestBody PrRequest request) {
+        Map<String,String> response = prqService.updatePrq(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+
+
     @GetMapping("/user")
     public ResponseEntity<Page<PrqSummaryResponse>> getUserPrq(
             @RequestParam(defaultValue = "0") int page,
