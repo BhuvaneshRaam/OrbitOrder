@@ -1,6 +1,8 @@
 package com.hoodle.orbitorder.Repository;
 
 import com.hoodle.orbitorder.Entity.PurchaseOrder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +17,5 @@ public interface PORepo extends JpaRepository<PurchaseOrder, UUID> {
 
     Optional<PurchaseOrder> findByIdAndTenantId(UUID id, UUID tenantId);
 
-
-    List<PurchaseOrder> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
+    Page<PurchaseOrder> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId, Pageable pageable);
 }

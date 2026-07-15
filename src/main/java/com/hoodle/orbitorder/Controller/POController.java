@@ -1,9 +1,11 @@
 package com.hoodle.orbitorder.Controller;
 
+import com.hoodle.orbitorder.DTO.POSummaryResponse;
 import com.hoodle.orbitorder.DTO.PoUpdateRequest;
 import com.hoodle.orbitorder.Entity.PurchaseOrder;
 import com.hoodle.orbitorder.Service.POService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +39,9 @@ public class POController {
 
     @PreAuthorize("hasAnyAuthority('PRQ_MANAGER', 'TENANT_ADMIN', 'PROCUREMENT_MANAGER', 'EMPLOYEE')")
     @GetMapping("/all")
-    public ResponseEntity<List<PurchaseOrder>> getAllPos() {
-        return ResponseEntity.ok(poService.getAllPos());
+    public ResponseEntity<Page<POSummaryResponse>> getAllPos(@RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(poService.getAllPos(page,size));
     }
 
     @PreAuthorize("hasAnyAuthority('PRQ_MANAGER', 'TENANT_ADMIN', 'PROCUREMENT_MANAGER', 'EMPLOYEE')")
