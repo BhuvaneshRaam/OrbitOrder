@@ -1,8 +1,6 @@
 package com.hoodle.orbitorder.Service;
 
-import com.hoodle.orbitorder.DTO.PoItemUpdateRequest;
-import com.hoodle.orbitorder.DTO.PoUpdateRequest;
-import com.hoodle.orbitorder.DTO.UserContext;
+import com.hoodle.orbitorder.DTO.*;
 import com.hoodle.orbitorder.Entity.PRQ;
 import com.hoodle.orbitorder.Entity.PurchaseOrder;
 import com.hoodle.orbitorder.Entity.PurchaseOrderItem;
@@ -13,6 +11,10 @@ import com.hoodle.orbitorder.Repository.PORepo;
 import com.hoodle.orbitorder.Repository.PRQRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -144,9 +146,13 @@ public class POService {
 
 
     // --- Get All POs ---
-    public List<PurchaseOrder> getAllPos() {
+    public Page<POSummaryResponse> getAllPos(int page, int size) {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return poRepo.findAllByTenantIdOrderByCreatedAtDesc(currentUser.tenantId());
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<PurchaseOrder> poPage =  poRepo.findAllByTenantIdOrderByCreatedAtDesc(currentUser.tenantId(), pageable);
+
+        return poPage.map(this::mapToSummary);
     }
 
     // --- Get PO by ID ---
@@ -154,6 +160,18 @@ public class POService {
         UserContext currentUser = (UserContext) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return poRepo.findByIdAndTenantId(poId, currentUser.tenantId())
                 .orElseThrow(() -> new BusinessException("Purchase Order not found", HttpStatus.NOT_FOUND));
+    }
+
+    private POSummaryResponse mapToSummary(PurchaseOrder po) {
+        return POSummaryResponse.builder()
+                .id(po.getId())
+                .poNumber(po.getPoNumber())
+                .vendorName(po.getVendorName())
+                .status(po.getStatus().name())
+                .totalAmount(po.getTotalAmount())
+                .prNumber(po.getOriginalPrq().getPrNumber())
+                .createdAt(po.getCreatedAt())
+                .build();
     }
 
 }
