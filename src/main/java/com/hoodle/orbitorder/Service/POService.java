@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -105,43 +105,21 @@ public class POService {
             throw new BusinessException("Only DRAFT Purchase Orders can be updated.", HttpStatus.BAD_REQUEST);
         }
 
-        // 3. Update Vendor Details
+        // 3. Update editable PO fields only
         po.setVendorName(request.getVendorName());
         po.setVendorEmail(request.getVendorEmail());
+        po.setNegotiatedPrice(request.getNegotiatedPrice());
 
-        // 4. Update Negotiated Prices & Recalculate
-        if (request.getItems() != null && !request.getItems().isEmpty()) {
-            for (PoItemUpdateRequest itemUpdate : request.getItems()) {
-
-                // Find the matching item inside the PO
-                PurchaseOrderItem matchingItem = po.getItems().stream()
-                        .filter(item -> item.getId().equals(itemUpdate.getId()))
-                        .findFirst()
-                        .orElseThrow(() -> new BusinessException("Item ID " + itemUpdate.getId() + " not found in this PO", HttpStatus.NOT_FOUND));
-
-                // Update unit price and recalculate line amount (quantity * new price)
-                matchingItem.setUnitPrice(itemUpdate.getNegotiatedPrice());
-                matchingItem.setLineAmount(
-                        itemUpdate.getNegotiatedPrice().multiply(BigDecimal.valueOf(matchingItem.getQuantity()))
-                );
-            }
-        }
-
-        // 5. Recalculate Grand Total for the PO
-        BigDecimal newTotal = po.getItems().stream()
-                .map(PurchaseOrderItem::getLineAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        po.setTotalAmount(newTotal);
-
-        // 6. Save and Return
+        // 4. Save and Return
         poRepo.save(po);
 
-        return Map.of(
-                "message", "Purchase Order updated successfully",
-                "poNumber", po.getPoNumber(),
-                "newTotalAmount", po.getTotalAmount()
-        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Purchase Order updated successfully");
+        response.put("poNumber", po.getPoNumber());
+        response.put("vendorName", po.getVendorName());
+        response.put("vendorEmail", po.getVendorEmail());
+        response.put("negotiatedPrice", po.getNegotiatedPrice());
+        return response;
     }
 
 

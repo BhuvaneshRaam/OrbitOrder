@@ -2,12 +2,11 @@ package com.hoodle.orbitorder.DTO;
 
 import lombok.Data;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 @Data
 public class PoUpdateRequest {
     private String vendorName;
     private String vendorEmail;
-
-    private List<PoItemUpdateRequest> items;
+    private BigDecimal negotiatedPrice;
 }
