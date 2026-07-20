@@ -41,8 +41,12 @@ public class PurchaseOrder {
     // External Vendor Details
     @Column(name="vendor_name")
     private String vendorName;
+
     @Column(name="vendor_email")
     private String vendorEmail;
+
+    @Column(name = "negotiated_price")
+    private BigDecimal negotiatedPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name="status", nullable = false)
