@@ -80,6 +80,9 @@ public class POService {
 
         po.setItems(poItems);
 
+        prq.setStatus(PrStatus.PO_CREATED);
+        prqRepo.save(prq);
+
         // 7. Save to Database
         PurchaseOrder savedPo = poRepo.save(po);
 

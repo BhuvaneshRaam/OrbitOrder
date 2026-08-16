@@ -4,5 +4,6 @@ public enum PrStatus {
     DRAFT,
     SUBMITTED,
     APPROVED,
-    REJECTED
+    REJECTED,
+    PO_CREATED
 }
