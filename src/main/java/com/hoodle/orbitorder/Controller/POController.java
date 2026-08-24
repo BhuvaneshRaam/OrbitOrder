@@ -21,14 +21,14 @@ public class POController {
     @Autowired
     private POService poService;
 
-    @PreAuthorize("hasAuthority('PROCUREMENT_MANAGER')")
+    @PreAuthorize("hasAuthority('PURCHASE_ORDERS.CREATE')")
     @PostMapping("/generate/{prqId}")
     public ResponseEntity<Map<String, Object>> generatePo(@PathVariable UUID prqId) {
         return ResponseEntity.ok(poService.generatePoFromPrq(prqId));
     }
 
     // PUT /api/v1/po/{poId}
-    @PreAuthorize("hasAnyAuthority('PRQ_MANAGER', 'TENANT_ADMIN', 'PROCUREMENT_MANAGER')")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_ORDERS.UPDATE')")
     @PutMapping("/{poId}")
     public ResponseEntity<Map<String, Object>> updateDraftPo(
             @PathVariable UUID poId,
@@ -37,14 +37,14 @@ public class POController {
         return ResponseEntity.ok(poService.updateDraftPo(poId, request));
     }
 
-    @PreAuthorize("hasAnyAuthority('PRQ_MANAGER', 'TENANT_ADMIN', 'PROCUREMENT_MANAGER', 'EMPLOYEE')")
+    @PreAuthorize("hasAuthority('PURCHASE_ORDERS.READ')")
     @GetMapping("/all")
     public ResponseEntity<Page<POSummaryResponse>> getAllPos(@RequestParam(defaultValue = "0") int page,
                                                              @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(poService.getAllPos(page,size));
     }
 
-    @PreAuthorize("hasAnyAuthority('PRQ_MANAGER', 'TENANT_ADMIN', 'PROCUREMENT_MANAGER', 'EMPLOYEE')")
+    @PreAuthorize("hasAuthority('PURCHASE_ORDERS.READ')")
     @GetMapping("/{poId}")
     public ResponseEntity<PurchaseOrder> getPoById(@PathVariable UUID poId) {
         return ResponseEntity.ok(poService.getPoById(poId));

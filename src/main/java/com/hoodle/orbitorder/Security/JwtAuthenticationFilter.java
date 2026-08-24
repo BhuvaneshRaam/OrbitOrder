@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -60,10 +61,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             System.out.println("3. Extracted User: " + userIdString + " | Tenant: " + tenantIdString);
 
             List<String> roles = jwtService.extractRoles(token);
+            List<String> permissions = jwtService.extractPermissions(token);
 
-            List<SimpleGrantedAuthority> authorities = roles.stream()
-                        .map(role -> new SimpleGrantedAuthority(role))
-                        .toList();
+            List<SimpleGrantedAuthority> authorities = Stream.concat(roles.stream(), permissions.stream())
+                    .map(authorityStr -> new SimpleGrantedAuthority(authorityStr))
+                    .toList();
+
             for (GrantedAuthority auth : authorities) {
                  System.out.println("Exact Authority String: '" + auth.getAuthority() + "'");
             }
