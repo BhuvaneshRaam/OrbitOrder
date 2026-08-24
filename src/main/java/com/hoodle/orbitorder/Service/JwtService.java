@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -49,6 +50,20 @@ public class JwtService {
 
         // Extract the "roles" array you created in the Auth Service
         return claims.get("roles", List.class);
+    }
+
+    public List<String> extractPermissions(String token) {
+        Claims claims = extractAllClaims(token);
+
+        List<?> permissionsClaim = claims.get("permissions", List.class);
+
+        if (permissionsClaim == null) {
+            return new ArrayList<>();
+        }
+
+        return permissionsClaim.stream()
+                .map(Object::toString)
+                .toList();
     }
 
     public String extractClaim(String token, String claimKey) {

@@ -24,12 +24,14 @@ public class PRQController {
     @Autowired
     private PRQService prqService;
 
+    @PreAuthorize("hasAnyAuthority('PURCHASE_REQUESTS.CREATE')")
     @PostMapping("/create")
     public ResponseEntity<Map<String,Object>> createPrq(@RequestBody PrRequest request) {
         Map<String,Object> response = prqService.createDraftPurchaseRequest(request);
         return ResponseEntity.status(201).body(response);
     }
 
+    @PreAuthorize("hasAnyAuthority('PURCHASE_REQUESTS.UPDATE')")
     @PutMapping("/edit/{id}")
     public ResponseEntity<Map<String,String>> createPrq(@PathVariable UUID id, @RequestBody PrRequest request) {
         Map<String,String> response = prqService.updatePrq(id, request);
@@ -37,8 +39,8 @@ public class PRQController {
     }
 
 
-
-    @GetMapping("/user")
+    @PreAuthorize("hasAnyAuthority('PURCHASE_REQUESTS.READ')")
+    @GetMapping("")
     public ResponseEntity<Page<PrqSummaryResponse>> getUserPrq(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -48,6 +50,7 @@ public class PRQController {
     }
 
     // --- 3. GET: All PRQs (Summary List with Optional Filter) ---
+    @PreAuthorize("hasAnyAuthority('PURCHASE_REQUESTS.READ_ALL')")
     @GetMapping("/all")
     public ResponseEntity<Page<PrqSummaryResponse>> getAllPrq(
             @RequestParam(required = false) String department,
@@ -58,27 +61,29 @@ public class PRQController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyAuthority('PURCHASE_REQUESTS.READ')")
     @GetMapping("/{id}")
     public ResponseEntity<PrqDetailResponse> getPrqById(@PathVariable UUID id) {
         PrqDetailResponse response = prqService.getPurchaseRequestById(id);
         return ResponseEntity.ok(response);
     }
 
-    // --- 5. POST: Submit a Draft ---
+
+    @PreAuthorize("hasAnyAuthority('PURCHASE_REQUESTS.CREATE') or hasAnyAuthority('PURCHASE_REQUESTS.UPDATE')")
     @PostMapping("/{id}/submit")
     public ResponseEntity<Map<String, String>> submitPrq(@PathVariable UUID id) {
         return ResponseEntity.ok(prqService.submitPrq(id));
     }
 
     // --- 6. POST: Approve a PRQ (Manager Only) ---
-    @PreAuthorize("hasAuthority('PROCUREMENT_MANAGER')")
+    @PreAuthorize("hasAuthority('PURCHASE_REQUESTS.APPROVE')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<Map<String, String>> approvePrq(@PathVariable UUID id) {
         return ResponseEntity.ok(prqService.approvePrq(id));
     }
 
     // --- 7. POST: Reject a PRQ (Manager Only) ---
-    @PreAuthorize("hasAuthority('PROCUREMENT_MANAGER')")
+    @PreAuthorize("hasAuthority('PURCHASE_REQUESTS.APPROVE')")
     @PostMapping("/{id}/reject")
     public ResponseEntity<Map<String, String>> rejectPrq(@PathVariable UUID id) {
         return ResponseEntity.ok(prqService.rejectPrq(id));
