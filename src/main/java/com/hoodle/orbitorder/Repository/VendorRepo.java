@@ -57,4 +57,6 @@ public interface VendorRepo extends JpaRepository<Vendor, UUID> {
             ORDER BY v.vendorName ASC, v.vendorUuid ASC
             """)
     List<VendorListResponse> findActiveVendorListByTenant(@Param("tenantId") UUID tenantId);
+
+    Long countByTenantIdAndIsActiveTrue(UUID tenantId);
 }
