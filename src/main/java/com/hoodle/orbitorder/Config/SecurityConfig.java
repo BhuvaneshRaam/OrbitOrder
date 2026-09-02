@@ -33,7 +33,7 @@ public class SecurityConfig {
 
                 // 2. Protect all endpoints in this microservice
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/api/v1/health","/error").permitAll()
                         .anyRequest().authenticated()
                 )
 
