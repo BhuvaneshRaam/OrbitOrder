@@ -48,11 +48,11 @@ public class VendorController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAllVendors(
+    public ResponseEntity<Page<VendorSummaryResponse>> getAllVendors(
             @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok("ORBIT ORDER REACHED SUCCESSFULLY");
+        return ResponseEntity.ok(vendorService.getAllVendors(search, page, size));
     }
 
     @GetMapping("/list")
